@@ -1,0 +1,48 @@
+---
+- name: Deploy Flipkart Clone to Apache HTTPD
+  hosts: webservers
+  become: yes
+
+  vars:
+    app_local_path: "/home/ansible/Flipkart-Clone"   # Path on Ansible control node
+    app_remote_path: "/var/www/html"                 # Apache's default web root
+    apache_package: "{{ 'httpd' if ansible_os_family == 'RedHat' else 'apache2' }}"
+
+  tasks:
+
+    - name: Install Apache HTTPD
+      package:
+        name: "{{ apache_package }}"
+        state: present
+
+    - name: Start and enable Apache service
+      service:
+        name: "{{ apache_package }}"
+        state: started
+        enabled: true
+
+    - name: Copy Flipkart Clone files to web server
+      copy:
+        src: "{{ app_local_path }}/"
+        dest: "{{ app_remote_path }}/"
+        owner: apache
+        group: apache
+        mode: '0644'
+        recurse: yes
+
+    - name: Set SELinux permissions (RedHat only)
+      command: restorecon -Rv "{{ app_remote_path }}"
+      when: ansible_os_family == "RedHat"
+
+    - name: Open HTTP port in firewall (RedHat only)
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: yes
+      when: ansible_os_family == "RedHat"
+
+    - name: Restart Apache
+      service:
+        name: "{{ apache_package }}"
+        state: restarted
