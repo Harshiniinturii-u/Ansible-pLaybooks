@@ -10,7 +10,7 @@
     jenkins_key_url: https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
 
   tasks:
-    - name: Install OpenJDK 17
+    - name: Install OpenJDK 17 (Amazon Corretto)
       dnf:
         name: "{{ java_package }}"
         state: present
@@ -39,23 +39,16 @@
         - /var/log/jenkins
         - /var/cache/jenkins
 
-    - name: Allow Jenkins port in firewall
-      firewalld:
-        port: 8080/tcp
-        permanent: yes
-        state: enabled
-        immediate: yes
-
-    - name: Temporarily disable SELinux enforcement
-      command: setenforce 0
-      when: ansible_selinux.status == "enabled"
+    - name: Reminder to open port 8080 in EC2 security group
+      debug:
+        msg: "Ensure port 8080 is open in your EC2 security group for Jenkins access."
 
     - name: Start Jenkins service
       service:
         name: jenkins
         state: started
 
-    - name: Enable Jenkins service
+    - name: Enable Jenkins service on boot
       systemd:
         name: jenkins
         enabled: true
