@@ -1,0 +1,13 @@
+---
+- hosts: webservers
+  user: ansible
+  become: yes
+  connection: ssh
+  tasks:
+    - name: I want to Install git in Host Machines
+      action: yum pkg='{{item}}' state=present
+      loop:
+        - git
+        - python3
+        - java-17-amazon-corretto.x86_64
+        
